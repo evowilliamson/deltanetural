@@ -13,9 +13,9 @@ def main():
         passphrase_bytes = bytearray(getpass.getpass(prompt="Enter a secure passphrase: ").encode())
 
         # Instantiate WalletManager and create a new wallet
-        wallet_manager = WalletManager(passphrase_bytes)
+        wallet_manager = WalletManager(passphrase=passphrase_bytes)
         print("Wallet created successfully.")
-        print(f"Wallet Address: {wallet_manager.get_public_key()}")
+        print(f"Wallet Address: {wallet_manager.get_public_key(passphrase=passphrase_bytes.decode())}")
 
     except Exception as e:
         print(f"An error occurred: {e}")

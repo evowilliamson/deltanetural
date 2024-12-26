@@ -40,6 +40,16 @@ class WalletManager:
                 for i in range(len(private_key)):
                     private_key[i] = 0  # Securely clear the private key from memory
 
+    def __init__(self, rpc_url="https://mainnet.base.org"):
+        """
+        Initialize the WalletManager class, create a wallet, and securely manage keys.
+
+        :param passphrase: Passphrase used for GPG encryption.
+        :param rpc_url: RPC URL for connecting to the blockchain.
+        """
+        self._gpg = gnupg.GPG()
+        self._web3 = Web3(Web3.HTTPProvider(rpc_url))
+
     def _encrypt_env_with_gpg(self, public_key, private_key, passphrase, encrypted_file=".env.gpg"):
         """
         Encrypt the wallet details and save them to an encrypted file.
@@ -49,14 +59,9 @@ class WalletManager:
         :param passphrase: Passphrase for GPG encryption.
         :param encrypted_file: Output file for encrypted content.
         """
-        # Prepare .env content in memory
-        private_key_str = "".join(format(x, "02x") for x in private_key)  # Convert bytearray to hex string
-        env_content = f"WALLET_ADDRESS={public_key}\nPRIVATE_KEY={private_key_str}"
-        env_stream = io.BytesIO(env_content.encode())
-
-        # Encrypt content using GPG
-        encrypted_data = self._gpg.encrypt_file(
-            env_stream,
+        # Encrypt content using GPG directly from formatted string
+        encrypted_data = self._gpg.encrypt(
+            f"WALLET_ADDRESS={public_key}\nPRIVATE_KEY={''.join(format(x, '02x') for x in private_key)}",
             recipients=None,  # Symmetric encryption
             output=encrypted_file,
             passphrase=passphrase,
@@ -78,45 +83,21 @@ class WalletManager:
 
     def show_private_key(self, passphrase, encrypted_file=".env.gpg"):
         """
-        Decrypt the .env.gpg file, print the private key to the console (if in test mode),
-        and securely clear all sensitive data from memory.
+        Decrypt the .env.gpg file, print the private key to the console.
 
         :param passphrase: Passphrase used to decrypt the file.
         :param encrypted_file: Path to the encrypted .env.gpg file.
         """
-        # Convert passphrase to string if it's a bytearray
-        if isinstance(passphrase, (bytes, bytearray)):
-            passphrase = passphrase.decode()
 
         with open(encrypted_file, "rb") as f:
             decrypted_data = self._gpg.decrypt_file(f, passphrase=passphrase)
 
-        if decrypted_data.ok:
-            print("Decrypted .env file successfully.")
-            try:
-                # Extract private key securely by searching for the specific string
-                private_key_hex = None
-                env_stream = io.StringIO(decrypted_data.data.decode())
+        # Search for "PRIVATE_KEY=" directly in the string
+        prefix = "PRIVATE_KEY="
+        start_index = decrypted_data.data.decode().find(prefix)
 
-                for line in env_stream:
-                    if line.startswith("PRIVATE_KEY="):
-                        private_key_hex = line.split("=", 1)[1].strip()
-                        break
-
-                if private_key_hex:
-                    private_key = bytearray.fromhex(private_key_hex)
-
-                    # Print the full private key
-                    print("WARNING: Printing private key for testing purposes.")
-                    print(f"Private Key: {private_key_hex}")
-
-                    # Securely clear the private key from memory
-                    for i in range(len(private_key)):
-                        private_key[i] = 0
-                else:
-                    raise ValueError("Private key not found in the decrypted .env file.")
-            finally:
-                # Clear decrypted data from memory
-                decrypted_data.data = None
+        if start_index != -1:
+            print(f"Private Key: {decrypted_data.data.decode()[start_index + len(prefix):].strip()}")
         else:
-            raise ValueError(f"Failed to decrypt the .env.gpg file: {decrypted_data.status}")
+            print("Private key not found.")
+

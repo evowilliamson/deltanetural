@@ -3,14 +3,11 @@ from wallet_manager import WalletManager  # Assuming the WalletManager class is 
 
 def main():
     try:
-        # Prompt user for the passphrase (input hidden for security)
-        passphrase = getpass.getpass("Enter your wallet passphrase: ")
-
         # Instantiate WalletManager
-        wallet_manager = WalletManager(passphrase)
+        wallet_manager = WalletManager()
 
         # Call show_private_key method to retrieve the private key
-        wallet_manager.show_private_key(passphrase)
+        wallet_manager.show_private_key(getpass.getpass("Enter your wallet passphrase: "))
 
     except ValueError as e:
         print(f"Error: {e}")

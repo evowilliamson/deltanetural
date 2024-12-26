@@ -24,10 +24,6 @@ class WalletManager:
         if isinstance(passphrase, (bytes, bytearray)):
             passphrase = passphrase.decode()
 
-        # Validate the passphrase
-        if not passphrase or len(passphrase) < 12 or not any(c.isdigit() for c in passphrase) or not any(c.isalpha() for c in passphrase):
-            raise ValueError("Passphrase must be at least 12 characters long, containing both letters and numbers.")
-
         # Create wallet and securely handle keys
         wallet = self._web3.eth.account.create()
         private_key = None
@@ -40,7 +36,6 @@ class WalletManager:
             if private_key:
                 for i in range(len(private_key)):
                     private_key[i] = 0  # Securely clear the private key from memory
-
 
     def _encrypt_env_with_gpg(self, public_key, private_key, passphrase, encrypted_file=".env.gpg"):
         """

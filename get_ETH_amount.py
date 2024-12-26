@@ -67,6 +67,3 @@ if __name__ == "__main__":
     balance_eth = get_eth_balance(wallet_address)
     print(f"Wallet Address: {wallet_address}")
     print(f"ETH Balance on Base Network: {balance_eth} ETH")
-
-#New Wallet Address: 0x0AE9ce42A77dC3BF2DBf3954FC4288d71D97323B
-#New Wallet Private Key: a1a1dea375b764a35a6a26736ced8167aac59a87c80c00334156c6ac2a92d0dc
